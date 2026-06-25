@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riverbend Volunteer Shifts</title>
+<style>
+  :root{
+    --ink:#1f2a1a;
+    --paper:#f6f4ec;
+    --card:#ffffff;
+    --line:#d9d4c4;
+    --line-2:#c9c4b4;
+    --grain:#566b3c;
+    --grain-d:#3f5230;
+    --grain-l:#e8eee0;
+    --clay:#c2683f;
+    --clay-d:#a8542f;
+    --clay-l:#f4e4da;
+    --sky:#3f6f8c;
+    --muted:#6c6a5e;
+    --ok:#3f7d4f;
+    --full:#9a958a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;
+    line-height:1.5;
+    padding:28px 18px 64px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  /* header */
+  .eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--grain-d);margin-bottom:8px;}
+  h1{font-size:30px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px;}
+  .lede{color:var(--muted);font-size:16px;max-width:54ch;margin-bottom:22px;}
+
+  .demo-note{background:#fbf6e8;border:1px solid #e3d6a8;border-left:5px solid #c9a94e;
+    border-radius:9px;padding:11px 15px;margin-bottom:20px;font-size:13.5px;color:#6b5a1f;}
+  .demo-note b{color:#4f4214;}
+
+  /* weather banner */
+  .banner{display:none;background:var(--clay-l);border:1px solid var(--clay);
+    border-left-width:5px;border-radius:9px;padding:14px 16px;margin-bottom:22px;}
+  .banner.show{display:block;}
+  .banner .b-title{font-weight:600;color:var(--clay-d);font-size:15px;margin-bottom:2px;
+    font-family:ui-monospace,monospace;letter-spacing:.02em;text-transform:uppercase;font-size:12px;}
+  .banner .b-body{font-size:14px;color:var(--ink);}
+
+  /* shift list */
+  .shift{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;margin-bottom:14px;display:flex;justify-content:space-between;
+    align-items:flex-start;gap:16px;transition:border-color .15s,transform .15s;}
+  .shift:hover{border-color:var(--grain);transform:translateY(-1px);}
+  .s-when{font-size:18px;font-weight:600;margin-bottom:3px;}
+  .s-where{color:var(--muted);font-size:14px;margin-bottom:9px;}
+  .tags{display:flex;flex-wrap:wrap;gap:7px;}
+  .tag{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.03em;
+    padding:4px 9px;border-radius:20px;background:var(--grain-l);color:var(--grain-d);}
+  .tag.age{background:var(--clay-l);color:var(--clay-d);}
+  .tag.spots{background:#eef1e8;color:var(--muted);}
+  .s-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:120px;}
+  .meter{width:120px;height:6px;border-radius:4px;background:#eceadf;overflow:hidden;}
+  .meter > i{display:block;height:100%;background:var(--grain);border-radius:4px;}
+  button{font-family:inherit;cursor:pointer;border:none;}
+  .btn{background:var(--grain);color:#fff;padding:11px 22px;border-radius:8px;
+    font-size:15px;font-weight:600;transition:background .15s;}
+  .btn:hover{background:var(--grain-d);}
+  .btn:disabled{background:var(--full);cursor:not-allowed;}
+
+  /* modal */
+  .modal{display:none;position:fixed;inset:0;background:rgba(31,42,26,.55);
+    align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .modal.open{display:flex;}
+  .sheet{background:var(--card);border-radius:14px;padding:26px;width:100%;max-width:420px;
+    max-height:90vh;overflow:auto;}
+  .sheet h2{font-size:20px;margin-bottom:4px;}
+  .sheet .m-shift{color:var(--grain-d);font-weight:600;margin-bottom:16px;font-size:15px;}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px;
+    font-family:ui-monospace,monospace;letter-spacing:.02em;}
+  input[type=text],input[type=email],input[type=tel]{width:100%;padding:11px 12px;
+    border:1.5px solid var(--line-2);border-radius:8px;font-size:15px;font-family:inherit;background:#fff;}
+  input:focus{outline:none;border-color:var(--grain);}
+  .check{display:flex;gap:10px;align-items:flex-start;margin-top:16px;
+    background:var(--grain-l);border-radius:9px;padding:12px;}
+  .check input{margin-top:3px;flex-shrink:0;width:17px;height:17px;accent-color:var(--grain);}
+  .check label{margin:0;font-family:inherit;letter-spacing:0;color:var(--ink);font-size:13.5px;}
+  .age-gate{display:none;background:var(--clay-l);border:1px solid var(--clay);
+    border-radius:9px;padding:11px 13px;margin-top:14px;font-size:13.5px;color:var(--clay-d);}
+  .age-gate.show{display:block;}
+  .m-actions{display:flex;gap:10px;margin-top:20px;}
+  .ghost{flex:1;background:#eceadf;color:var(--ink);padding:11px;border-radius:8px;font-weight:600;}
+  .m-confirm{flex:2;}
+  .err{color:var(--clay-d);font-size:13px;margin-top:8px;min-height:18px;}
+
+  /* toast */
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:13px 20px;border-radius:10px;font-size:14.5px;
+    opacity:0;transition:all .25s;pointer-events:none;max-width:88vw;z-index:60;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .footnote{margin-top:26px;font-size:13px;color:var(--muted);font-family:ui-monospace,monospace;}
+  .footnote a{color:var(--grain-d);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Riverbend Food Alliance</p>
+  <h1>Volunteer shifts</h1>
+  <p class="lede">Pick a shift and we'll text you a reminder the day before. New volunteers sign a one-page waiver when they arrive.</p>
+
+  <div class="demo-note" id="demo-note">
+    <b>Preview only.</b> This is a design demo — sign-ups aren't saved or sent anywhere yet. The real version will connect to our Airtable roster.
+  </div>
+
+  <div class="banner" id="banner">
+    <div class="b-title">⚠ Weather cancellation</div>
+    <div class="b-body" id="banner-body"></div>
+  </div>
+
+  <div id="shifts"></div>
+
+  <p class="footnote">Questions about a group sign-up (school, NHS, corporate)? Email Priya — we coordinate those directly and cap each group at the shift size. · <a href="#" id="demo-toggle">Preview weather banner</a></p>
+</div>
+
+<!-- Signup modal -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2>Sign up</h2>
+    <div class="m-shift" id="m-shift"></div>
+
+    <label for="f-name">Your name</label>
+    <input type="text" id="f-name" autocomplete="name">
+
+    <label for="f-email">Email</label>
+    <input type="email" id="f-email" autocomplete="email">
+
+    <label for="f-phone">Mobile (for the reminder text)</label>
+    <input type="tel" id="f-phone" autocomplete="tel">
+
+    <div class="age-gate" id="age-gate"></div>
+
+    <div class="check">
+      <input type="checkbox" id="f-waiver">
+      <label for="f-waiver" id="waiver-label">I understand I'll complete Riverbend's one-page liability waiver before my first shift.</label>
+    </div>
+
+    <div class="err" id="err"></div>
+
+    <div class="m-actions">
+      <button class="ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn m-confirm" onclick="submit()">Confirm shift</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // Shift definitions. age + ageNote enforce the handbook's insurance rules.
+  const SHIFTS = [
+    {id:"tue-am", day:"Tuesday",  time:"9am – 12pm", loc:"Warehouse sort",            need:8,  minAge:14, ageNote:"14+ with a parent's OK · 16+ on your own"},
+    {id:"tue-pm", day:"Tuesday",  time:"1pm – 4pm",  loc:"Warehouse sort",            need:6,  minAge:14, ageNote:"14+ with a parent's OK · 16+ on your own"},
+    {id:"thu-am", day:"Thursday", time:"9am – 12pm", loc:"Warehouse sort",            need:8,  minAge:14, ageNote:"14+ with a parent's OK · 16+ on your own"},
+    {id:"sat-rt", day:"Saturday", time:"8am – 11am", loc:"Mobile pantry — Ellis",     need:12, minAge:18, ageNote:"18+ only — insurance rule for delivery routes"},
+    {id:"sat-dr", day:"Saturday", time:"9am – 1pm",  loc:"Public drop-off",           need:4,  minAge:16, ageNote:"16+ on your own"},
+  ];
+
+  let selected = null;
+  const $ = id => document.getElementById(id);
+
+  // Storage shim: use Claude's window.storage when present (it persists),
+  // otherwise fall back to an in-memory store so the hosted demo still runs.
+  const mem = {};
+  const store = (window.storage) ? window.storage : {
+    get: async k => (k in mem ? {value: mem[k]} : null),
+    set: async (k,v) => { mem[k]=v; return {value:v}; },
+  };
+
+  // ---- storage helpers (signups persist across reloads when supported) ----
+  async function getCount(shiftId){
+    try{ const r = await store.get("signups:"+shiftId, true);
+      return r ? JSON.parse(r.value).length : 0; }
+    catch(e){ return 0; }
+  }
+  async function addSignup(shiftId, person){
+    let list = [];
+    try{ const r = await store.get("signups:"+shiftId, true);
+      if(r) list = JSON.parse(r.value); }catch(e){}
+    list.push(person);
+    await store.set("signups:"+shiftId, JSON.stringify(list), true);
+    return list.length;
+  }
+
+  async function render(){
+    const rows = await Promise.all(SHIFTS.map(async s=>{
+      const taken = await getCount(s.id);
+      const open = Math.max(0, s.need - taken);
+      const full = open === 0;
+      const pct = Math.min(100, Math.round(taken/s.need*100));
+      const ageClass = s.minAge>=18 ? "tag age" : "tag";
+      return `
+        <div class="shift">
+          <div class="s-left">
+            <div class="s-when">${s.day} · ${s.time}</div>
+            <div class="s-where">${s.loc}</div>
+            <div class="tags">
+              <span class="${ageClass}">${s.ageNote}</span>
+              <span class="tag spots">${open} of ${s.need} open</span>
+            </div>
+          </div>
+          <div class="s-right">
+            <div class="meter"><i style="width:${pct}%"></i></div>
+            <button class="btn" ${full?"disabled":""} onclick="openModal('${s.id}')">${full?"Full":"Sign up"}</button>
+          </div>
+        </div>`;
+    }));
+    $("shifts").innerHTML = rows.join("");
+  }
+
+  function openModal(id){
+    selected = SHIFTS.find(s=>s.id===id);
+    $("m-shift").textContent = `${selected.day} ${selected.time} · ${selected.loc}`;
+    const gate = $("age-gate");
+    if(selected.minAge>=18){
+      gate.textContent = "This is a delivery-route shift. You must be 18 or older — please confirm you are by signing up.";
+      gate.classList.add("show");
+    } else {
+      gate.classList.remove("show");
+    }
+    $("err").textContent = "";
+    $("modal").classList.add("open");
+    $("f-name").focus();
+  }
+  function closeModal(){
+    $("modal").classList.remove("open");
+    ["f-name","f-email","f-phone"].forEach(i=>$(i).value="");
+    $("f-waiver").checked=false;
+  }
+
+  async function submit(){
+    const name=$("f-name").value.trim();
+    const email=$("f-email").value.trim();
+    const phone=$("f-phone").value.trim();
+    if(!name){ $("err").textContent="Please enter your name."; return; }
+    if(!phone){ $("err").textContent="We need a mobile number to text your reminder."; return; }
+    if(!$("f-waiver").checked){ $("err").textContent="Please acknowledge the waiver to continue."; return; }
+
+    // Re-check capacity at submit time (someone may have taken the last spot)
+    const taken = await getCount(selected.id);
+    if(taken >= selected.need){
+      $("err").textContent="Sorry — that shift just filled up.";
+      await render(); return;
+    }
+    await addSignup(selected.id, {name,email,phone,at:new Date().toISOString()});
+    const sid = selected.day+" "+selected.time;
+    closeModal();
+    await render();
+    toast(`You're on for ${sid}. We'll text you the day before.`);
+  }
+
+  function toast(msg){
+    const t=$("toast"); t.textContent=msg; t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"), 3600);
+  }
+
+  // Weather-cancellation banner (the wishlist item). In a real build, Marcus
+  // flips this by 6am; here it's a manual preview toggle.
+  $("demo-toggle").addEventListener("click", e=>{
+    e.preventDefault();
+    const b=$("banner");
+    if(b.classList.contains("show")){ b.classList.remove("show"); }
+    else{
+      $("banner-body").textContent="Saturday's Mobile pantry — Ellis shift is cancelled due to weather. We'll be in touch about rescheduling. All other shifts are running as planned.";
+      b.classList.add("show");
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
